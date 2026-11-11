@@ -1,27 +1,28 @@
 /*
-* ミニ四脚歩行ロボット ファームウェア骨子 (Arduino Nano 互換機 + PCA9685)
+* ミニ四脚歩行ロボット ファームウェア (Arduino Nano 互換機 + PCA9685)
 *
-* このスケッチは Arduino IDE / arduino-cli の無い環境で書かれた
-* 骨子であり、コンパイル確認は行われていない。実機投入前に必ず
-* Arduino IDE でコンパイルと単体動作確認を行うこと。
+* コンパイル確認済み (2026-11-11): arduino-cli 1.6.0、
+* arduino:avr 1.8.8、Adafruit PWM Servo Driver Library 3.0.3 で
+* arduino:avr:nano 向けにコンパイル成功 (Flash 8186 bytes / RAM 304 bytes)。
+* フラッシュ書き込みと実機動作の確認は未実施 (docs/BRINGUP.md の Stage A)。
 *
 * 依存ライブラリ: Adafruit PWM Servo Driver Library
 * (ライブラリマネージャからインストール。Wire は標準ライブラリ)
 *
 * 構成: Nano --(I2C)--> PCA9685 --(PWM)--> MG90S x8
-* 歩容パラメータと計算式は PC 側 gait.py / leg_ik.py と同一。
-* パラメータを変更したら Python 側 (GaitConfig) と揃えること。
+* 歩容パラメータと計算式は PC 側 gait.cpp / leg_ik.cpp と同一。
+* パラメータを変更したら C++ 側 (GaitConfig) と揃えること。
 */
 
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
 
 // ===================== パラメータ (ここに集約) =====================
-// 脚寸法 [mm] (leg_ik.LegGeometry と同じ)
+// 脚寸法 [mm] (leg_ik.hpp の LegGeometry と同じ)
 const float L1 = 50.0; // 上リンク
 const float L2 = 60.0; // 下リンク
 
-// 歩容 (gait.GaitConfig と同じ)
+// 歩容 (gait.hpp の GaitConfig と同じ)
 const float HIP_HEIGHT = 95.0; // 股関節高さ = 足先 z [mm]
 const float STRIDE = 36.0; // 足先の前後移動量 [mm]
 const float STEP_HEIGHT = 14.0; // 足上げ高さ [mm]
@@ -35,7 +36,7 @@ const int PWM_FREQ = 50;
 const int PULSE_MIN_US = 500; // 0 deg
 const int PULSE_MAX_US = 2500; // 180 deg
 
-// サーボ変換の校正 (実機で詰める。gait.py の *_offset / *_dir に対応)
+// サーボ変換の校正 (実機で詰める。gait.hpp の *_offset / *_dir に対応)
 const float SERVO_CENTER = 90.0;
 const float KNEE_OFFSET = -25.0; // 膝サーボの取付オフセット
 
@@ -58,7 +59,7 @@ int counts = (int)(us * 4096.0 * PWM_FREQ / 1000000.0);
 pwm.setPWM(ch, 0, counts);
 }
 
-// 足先軌跡: gait.foot_position と同じ (支持期=直線, 遊脚期=楕円の上半分)
+// 足先軌跡: gait.cpp の foot_position と同じ (支持期=直線, 遊脚期=楕円の上半分)
 // phase は [0,1)、戻り値は股関節基準の (x, z) [mm]、z は下方 +
 void footPosition(float phase, float &x, float &z) {
 float u = phase - floor(phase);
@@ -76,7 +77,7 @@ x *= DIRECTION;
 z = HIP_HEIGHT - lift;
 }
 
-// 逆運動学: leg_ik.inverse_kinematics と同じ (elbow_sign=+1, 膝後ろ配置)
+// 逆運動学: leg_ik.cpp の inverse_kinematics と同じ (elbow_sign=+1, 膝後ろ配置)
 // 到達不能の場合はリーチ内に丸める (実機保護のため例外ではなくクランプ)
 void inverseKinematics(float x, float z, float &a1deg, float &a2deg) {
 float r = sqrt(x * x + z * z);

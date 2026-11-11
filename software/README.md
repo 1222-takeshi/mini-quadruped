@@ -12,7 +12,7 @@ carries over to the hardware.
 | `leg_ik.hpp` / `leg_ik.cpp` | Two-link leg inverse/forward kinematics (hip pitch + knee). Link lengths are parameters (`LegGeometry`). Unreachable targets throw `std::invalid_argument`. |
 | `gait.hpp` / `gait.cpp` | Trot gait generator: diagonal leg pairs with 0.5 phase offset, elliptical swing trajectory. Produces one cycle of target angles for 8 servos, with per-leg direction/offset calibration parameters (`GaitConfig`). |
 | `tests/test_main.cpp` | Verification binary: FK/IK roundtrips, foot-trajectory continuity, servo angle range and continuity, periodicity, diagonal-pair consistency. |
-| `firmware/quadruped_nano.ino` | Firmware skeleton for Arduino Nano + PCA9685. **Not yet compile-verified** (see the comment at the top of the file). |
+| `firmware/quadruped_nano/quadruped_nano.ino` | Firmware for Arduino Nano + PCA9685. Compile-verified with arduino-cli (arduino:avr:nano); flashing and on-hardware checks are in `docs/BRINGUP.md`. |
 | `Makefile` | Build and test entry points. |
 
 Coordinate conventions are documented in `leg_ik.hpp`: x = forward,
