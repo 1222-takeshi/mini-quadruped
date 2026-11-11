@@ -30,8 +30,8 @@ Toolchain (command line, no IDE required):
 ```sh
 arduino-cli core install arduino:avr
 arduino-cli lib install "Adafruit PWM Servo Driver Library"
-arduino-cli compile --fqbn arduino:avr:nano software/firmware/quadruped_nano.ino
-arduino-cli upload -p <port> --fqbn arduino:avr:nano software/firmware/quadruped_nano.ino
+arduino-cli compile --fqbn arduino:avr:nano software/firmware/quadruped_nano
+arduino-cli upload -p <port> --fqbn arduino:avr:nano software/firmware/quadruped_nano
 ```
 
 Clone Nano boards often use the old bootloader; if upload fails with
@@ -40,7 +40,9 @@ and record which variant this board needs below.
 
 Checklist - acceptance is "PWM output on all 8 channels":
 
-- [ ] Sketch compiles with no errors (record arduino-cli/core/library versions)
+- [x] Sketch compiles with no errors - done 2026-11-11 (arduino-cli
+      1.6.0, arduino:avr 1.8.8, Adafruit PWM Servo Driver Library
+      3.0.3; flash 8186 bytes, RAM 304 bytes). Re-check after edits.
 - [ ] Board flashes; note bootloader variant that worked: ________
 - [ ] I2C scan finds the PCA9685 at 0x40
 - [ ] With a single test servo (or servo tester / oscilloscope if
@@ -73,7 +75,7 @@ frame but the robot suspended:
    direction and smoothness, then record the values in the table.
 5. Enter the final values in BOTH places that must stay in sync:
    `software/gait.hpp` (`GaitConfig`) and
-   `software/firmware/quadruped_nano.ino`. Re-run `make test` after
+   `software/firmware/quadruped_nano/quadruped_nano.ino`. Re-run `make test` after
    editing the C++ config.
 
 Recording table (initial values: dir +1, hip offset 0, knee -25):
