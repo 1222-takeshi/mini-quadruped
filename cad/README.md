@@ -9,6 +9,7 @@ Design inputs and the v0/v1 revision plan: `docs/FRAME_DESIGN.md`.
 uv venv --python 3.11 cad/.venv
 uv pip install --python cad/.venv/bin/python cadquery   # 2.8.0 verified
 cad/.venv/bin/python cad/check_dimensions.py   # dimension checks
+cad/.venv/bin/python cad/assembly_check.py     # assembly + interference sweep
 cad/.venv/bin/python cad/make_parts.py         # STEP/STL into cad/out/
 ```
 
