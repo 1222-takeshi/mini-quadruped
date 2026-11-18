@@ -51,6 +51,10 @@ Checklist - acceptance is "PWM output on all 8 channels":
 - [ ] Pulse width at 0 / 90 / 180 deg is approx. 500 / 1500 / 2500 us
 - [ ] No Nano reset or servo jitter with all 8 channels driven
       (servos unloaded is fine at this stage)
+- [ ] Serial control (9600 bps, newline-terminated): on power-up the
+      robot holds the neutral pose and does not walk until `g` is
+      sent. Check `?` prints help, `n` re-commands neutral, and
+      `s <ch> <deg>` moves one channel
 
 ## Stage B - Per-servo calibration (Issue #4)
 
@@ -63,11 +67,13 @@ Procedure, repeated per leg (FL, FR, RL, RR), servos fitted to the
 frame but the robot suspended:
 
 1. Disconnect the horn from the link. Command the servo to its
-   centre (90 deg) via the firmware's calibration path (or a servo
-   tester set to 1500 us).
+   centre (90 deg) with the firmware's serial commands (`c` for all
+   channels, or `s <ch> 90` for one; 9600 bps) or a servo tester
+   set to 1500 us.
 2. Fit the horn/link so the leg points as close as possible to the
    reference neutral pose; this minimises the offset to record.
-3. Command the reference neutral pose. Measure the remaining error:
+3. Command the reference neutral pose (`n` over serial). Measure
+   the remaining error:
    if the leg moves opposite to the model when the phase advances,
    set that joint's direction to -1; then set the offset so the
    commanded pose matches the model pose.

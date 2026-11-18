@@ -6,6 +6,10 @@
 * arduino:avr:nano 向けにコンパイル成功 (Flash 8186 bytes / RAM 304 bytes)。
 * フラッシュ書き込みと実機動作の確認は未実施 (docs/BRINGUP.md の Stage A)。
 *
+* シリアルコマンド (9600 bps, 改行終端): 起動時は歩行せず中立姿勢で保持する。
+*   n = 中立姿勢, c = 全サーボ raw 90°, s <ch> <deg> = 個別サーボ指定,
+*   g = 歩行の開始/停止トグル, ? = ヘルプ表示。校正手順は docs/BRINGUP.md。
+*
 * 依存ライブラリ: Adafruit PWM Servo Driver Library
 * (ライブラリマネージャからインストール。Wire は標準ライブラリ)
 *
@@ -106,13 +110,69 @@ setServoAngle(CH_HIP[leg], hip);
 setServoAngle(CH_KNEE[leg], knee);
 }
 
+// ===================== シリアル校正モード =====================
+bool gaitRunning = false; // 起動時は歩行しない (安全のため)
+
+void setNeutralPose() {
+for (int leg = 0; leg < 4; leg++) {
+float a1, a2;
+inverseKinematics(0.0, HIP_HEIGHT, a1, a2);
+float hip = SERVO_CENTER + HIP_DIR[leg] * a1 + HIP_OFFSET[leg];
+float knee = SERVO_CENTER + KNEE_DIR[leg] * a2 + KNEE_OFFSET;
+setServoAngle(CH_HIP[leg], hip);
+setServoAngle(CH_KNEE[leg], knee);
+}
+}
+
+void setAllCenter() {
+for (int ch = 0; ch < 8; ch++) setServoAngle(ch, SERVO_CENTER);
+}
+
+void printHelp() {
+Serial.println("cmds: n=neutral, c=center90, s <ch> <deg>, g=gait on/off, ?=help");
+}
+
+char cmdBuf[32];
+int cmdLen = 0;
+
+void runCommand(char *line) {
+if (line[0] == 'n') { gaitRunning = false; setNeutralPose(); Serial.println("neutral"); }
+else if (line[0] == 'c') { gaitRunning = false; setAllCenter(); Serial.println("center"); }
+else if (line[0] == 'g') { gaitRunning = !gaitRunning; Serial.println(gaitRunning ? "gait on" : "gait off"); }
+else if (line[0] == 's') {
+int ch; float deg;
+if (sscanf(line + 1, "%d %f", &ch, &deg) == 2 && 0 <= ch && ch < 8) {
+gaitRunning = false;
+setServoAngle(ch, deg);
+Serial.println("set");
+} else { Serial.println("usage: s <ch 0-7> <deg>"); }
+}
+else if (line[0] == '?') { printHelp(); }
+}
+
+void pollSerial() {
+while (Serial.available() > 0) {
+char c = (char)Serial.read();
+if (c == '\n' || c == '\r') {
+if (cmdLen > 0) { cmdBuf[cmdLen] = '\0'; runCommand(cmdBuf); cmdLen = 0; }
+} else if (cmdLen < (int)sizeof(cmdBuf) - 1) {
+cmdBuf[cmdLen++] = c;
+}
+}
+}
+
 void setup() {
+Serial.begin(9600);
 Wire.begin();
 pwm.begin();
 pwm.setPWMFreq(PWM_FREQ);
+setNeutralPose();
+printHelp();
 }
 
 void loop() {
+pollSerial();
+if (!gaitRunning) return;
 static unsigned long last = 0;
 unsigned long now = millis();
 if (now - last < UPDATE_MS) return;
