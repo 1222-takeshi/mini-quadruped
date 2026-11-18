@@ -25,7 +25,8 @@ Requires a C++17 compiler (g++) and make. No external dependencies.
 
 ```sh
 cd software
-make test     # builds tests/test_main and runs all checks
+make test          # builds tests/test_main and runs all checks
+make check-params  # verifies firmware constants match the C++ reference
 ```
 
 `make test` exits with code 0 when every check passes. Tolerances match the
