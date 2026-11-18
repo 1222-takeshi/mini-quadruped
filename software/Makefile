@@ -5,7 +5,7 @@ LIB_SRC := leg_ik.cpp gait.cpp
 LIB_OBJ := $(LIB_SRC:.cpp=.o)
 TEST_BIN := tests/test_main
 
-.PHONY: all test clean
+.PHONY: all test clean check-params
 
 all: $(TEST_BIN)
 
@@ -20,6 +20,9 @@ $(TEST_BIN): $(LIB_OBJ) tests/test_main.o
 
 test: $(TEST_BIN)
 	./$(TEST_BIN)
+
+check-params:
+	python3 check_params.py
 
 clean:
 	rm -f $(LIB_OBJ) tests/test_main.o $(TEST_BIN)
