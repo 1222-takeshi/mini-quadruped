@@ -8,6 +8,7 @@
 //   [3] Servo angle range within [0, 180] deg
 //   [4] Periodicity: state at phase 1.0 matches phase 0.0
 //   [5] Diagonal pair: FL and RR servo angles are identical (trot)
+//   [6] Turning: per-side stride scaling (left/right foot travel)
 //
 // Tolerances follow the original numeric check: foot step <= 8 mm,
 // servo step <= 12 deg, period tolerance 1e-6 deg, IK roundtrip 1e-9.
@@ -226,11 +227,48 @@ void test_gait() {
     std::printf("\n");
 }
 
+void test_turn() {
+    std::printf("[6] Turning (per-side stride scaling)\n");
+    GaitConfig cfg;
+    cfg.turn = 0.25;
+    const auto feet = generate_foot_positions(cfg);
+    // Foot travel (max x - min x) per leg: left scaled by (1-turn),
+    // right by (1+turn), relative to the 36 mm base stride.
+    for (int j = 0; j < kLegCount; ++j) {
+        double lo = feet[0][j].first, hi = feet[0][j].first;
+        for (int i = 0; i < cfg.steps_per_cycle; ++i) {
+            lo = std::min(lo, feet[i][j].first);
+            hi = std::max(hi, feet[i][j].first);
+        }
+        const bool left = (j == 0 || j == 2);  // FL, RL
+        const double expect = cfg.stride * (left ? 0.75 : 1.25);
+        char buf[128];
+        std::snprintf(buf, sizeof(buf), "%s travel %.2f mm (expect %.2f)",
+                      leg_name(static_cast<Leg>(j)), hi - lo, expect);
+        check(near(hi - lo, expect, 0.6), buf);
+    }
+    // Servo commands stay in range for strong turns both ways.
+    for (double t : {-0.3, 0.3}) {
+        GaitConfig c2;
+        c2.turn = t;
+        const auto servo = generate_cycle(c2);
+        bool in_range = true;
+        for (const auto& row : servo)
+            for (double v : row)
+                in_range = in_range && (0.0 <= v && v <= 180.0);
+        char buf[128];
+        std::snprintf(buf, sizeof(buf), "turn=%+.1f servo range within [0,180]", t);
+        check(in_range, buf);
+    }
+    std::printf("\n");
+}
+
 }  // namespace
 
 int main() {
     test_leg_ik();
     test_gait();
+    test_turn();
     std::printf("Result: %s\n", g_failures == 0 ? "ALL PASS" : "FAILURES PRESENT");
     return g_failures == 0 ? 0 : 1;
 }

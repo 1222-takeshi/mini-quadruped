@@ -28,6 +28,7 @@ const float STRIDE = 36.0; // 足先の前後移動量 [mm]
 const float STEP_HEIGHT = 14.0; // 足上げ高さ [mm]
 const float DUTY = 0.5; // 支持期の割合 (トロット)
 const float DIRECTION = 1.0; // +1: 前進, -1: 後退
+const float TURN = 0.0; // -1..+1: 左右のストライド倍率 (gait.hpp の turn と同じ)。左脚 x(1-TURN), 右脚 x(1+TURN)
 const unsigned long CYCLE_MS = 1600; // 1周期の時間 [ms] (ゆっくり)
 const unsigned long UPDATE_MS = 20; // サーボ更新間隔 [ms]
 
@@ -61,12 +62,13 @@ pwm.setPWM(ch, 0, counts);
 
 // 足先軌跡: gait.cpp の foot_position と同じ (支持期=直線, 遊脚期=楕円の上半分)
 // phase は [0,1)、戻り値は股関節基準の (x, z) [mm]、z は下方 +
-void footPosition(float phase, float &x, float &z) {
+// stride は脚ごとの実効ストライド (旋回時は左右で異なる)
+void footPosition(float phase, float stride, float &x, float &z) {
 float u = phase - floor(phase);
-float half = STRIDE / 2.0;
+float half = stride / 2.0;
 float lift;
 if (u < DUTY) {
-x = half - STRIDE * (u / DUTY);
+x = half - stride * (u / DUTY);
 lift = 0.0;
 } else {
 float v = (u - DUTY) / (1.0 - DUTY);
@@ -94,7 +96,9 @@ a2deg = a2 * 180.0 / PI;
 
 void updateLeg(int leg, float basePhase) {
 float x, z, a1, a2;
-footPosition(basePhase + PHASE_OFFSET[leg], x, z);
+bool right = (leg == 1 || leg == 3); // FR, RR
+float stride = STRIDE * (right ? (1.0 + TURN) : (1.0 - TURN));
+footPosition(basePhase + PHASE_OFFSET[leg], stride, x, z);
 inverseKinematics(x, z, a1, a2);
 float hip = SERVO_CENTER + HIP_DIR[leg] * a1 + HIP_OFFSET[leg];
 float knee = SERVO_CENTER + KNEE_DIR[leg] * a2 + KNEE_OFFSET;

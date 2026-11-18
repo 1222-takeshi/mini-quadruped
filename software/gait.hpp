@@ -41,6 +41,9 @@ struct GaitConfig {
     double duty = 0.5;           // stance fraction (0.5 for trot)
     int steps_per_cycle = 40;    // samples per cycle
     double direction = 1.0;      // +1: forward, -1: backward
+    double turn = 0.0;           // -1..+1: stride scaling per side.
+                                 // Left legs scale by (1-turn), right legs
+                                 // by (1+turn); turn > 0 turns left.
     int elbow_sign = +1;         // knee configuration (same as leg_ik)
 
     // Trot phase offsets (fraction of one cycle), indexed by Leg.
@@ -59,8 +62,14 @@ struct GaitConfig {
 // Phase in [0,1) -> foot target (x, z) [mm], hip-relative, z downward (+).
 std::pair<double, double> foot_position(double phase, const GaitConfig& cfg);
 
+// Same, for one leg, applying the per-side stride scaling from cfg.turn.
+std::pair<double, double> foot_position(double phase, Leg leg,
+                                        const GaitConfig& cfg);
+
 // Phase -> joint angles of one leg (a1, a2) [deg].
 std::pair<double, double> leg_joint_angles(double phase, const GaitConfig& cfg);
+std::pair<double, double> leg_joint_angles(double phase, Leg leg,
+                                           const GaitConfig& cfg);
 
 // Joint angles [deg] -> servo command angles [deg] (hip, knee).
 std::pair<double, double> to_servo_angles(Leg leg, double a1_deg, double a2_deg,
