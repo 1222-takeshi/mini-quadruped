@@ -101,11 +101,15 @@ not print strength, is the design limit (`docs/PLAN.md`).
   every dimension as a named parameter at the top of the file, in the
   same style as the other in-house projects. Generated STEP/STL go to
   `cad/out/` (git-ignored).
-- Before a CAD PR is reviewed, a dimension check script verifies:
-  1. every part's bounding box is <= 140 mm per side;
-  2. upper/lower link axis distances are exactly 50.0 / 60.0 mm;
-  3. no interference between legs, links, and decks over the +/-35 deg
-     hip/knee sweep around the neutral pose.
+- Before a CAD PR is reviewed, check scripts verify:
+  1. every part's bounding box is <= 140 mm per side
+     (`cad/check_dimensions.py`);
+  2. upper/lower link axis distances are exactly 50.0 / 60.0 mm
+     (`cad/check_dimensions.py`);
+  3. no interference between legs, links, and decks over the trot
+     cycle (`cad/assembly_check.py`, 8 sampled poses, placement
+     validated against the C++ FK positions). Status: passing on
+     CAD v0 (2026-11-18).
 - Print guidance (starting point): 3 walls, 20-30% infill for links
   and brackets; decks flat on the bed; links printed on their side so
   layer lines do not cross the bending direction.
