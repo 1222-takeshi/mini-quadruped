@@ -21,15 +21,24 @@ const char* leg_name(Leg leg) {
     return "??";
 }
 
-std::pair<double, double> foot_position(double phase, const GaitConfig& cfg) {
+namespace {
+double stride_for(Leg leg, const GaitConfig& cfg) {
+    const bool left = (leg == Leg::FL || leg == Leg::RL);
+    return cfg.stride * (left ? (1.0 - cfg.turn) : (1.0 + cfg.turn));
+}
+}  // namespace
+
+std::pair<double, double> foot_position_stride(double phase,
+                                               const GaitConfig& cfg,
+                                               double stride) {
     double u = std::fmod(phase, 1.0);
     if (u < 0.0) u += 1.0;
-    const double half = cfg.stride / 2.0;
+    const double half = stride / 2.0;
     double x;
     double lift;
     if (u < cfg.duty) {
         // Stance: +half -> -half at constant speed (body moves forward).
-        x = half - cfg.stride * (u / cfg.duty);
+        x = half - stride * (u / cfg.duty);
         lift = 0.0;
     } else {
         // Swing: upper half of an ellipse (-half -> +half).
@@ -40,8 +49,24 @@ std::pair<double, double> foot_position(double phase, const GaitConfig& cfg) {
     return {cfg.direction * x, cfg.hip_height - lift};
 }
 
+std::pair<double, double> foot_position(double phase, const GaitConfig& cfg) {
+    return foot_position_stride(phase, cfg, cfg.stride);
+}
+
+std::pair<double, double> foot_position(double phase, Leg leg,
+                                        const GaitConfig& cfg) {
+    return foot_position_stride(phase, cfg, stride_for(leg, cfg));
+}
+
 std::pair<double, double> leg_joint_angles(double phase, const GaitConfig& cfg) {
     const auto [x, z] = foot_position(phase, cfg);
+    const auto [a1, a2] = inverse_kinematics(x, z, cfg.geo, cfg.elbow_sign);
+    return {a1 * kRadToDeg, a2 * kRadToDeg};
+}
+
+std::pair<double, double> leg_joint_angles(double phase, Leg leg,
+                                           const GaitConfig& cfg) {
+    const auto [x, z] = foot_position(phase, leg, cfg);
     const auto [a1, a2] = inverse_kinematics(x, z, cfg.geo, cfg.elbow_sign);
     return {a1 * kRadToDeg, a2 * kRadToDeg};
 }
@@ -62,8 +87,8 @@ std::vector<std::array<double, kServoCount>> generate_cycle(
             static_cast<double>(i) / cfg.steps_per_cycle;
         for (int j = 0; j < kLegCount; ++j) {
             const Leg leg = static_cast<Leg>(j);
-            const auto [a1, a2] =
-                leg_joint_angles(base_phase + cfg.phase_offset[j], cfg);
+            const auto [a1, a2] = leg_joint_angles(
+                base_phase + cfg.phase_offset[j], leg, cfg);
             const auto [hip, knee] = to_servo_angles(leg, a1, a2, cfg);
             out[i][2 * j] = hip;
             out[i][2 * j + 1] = knee;
@@ -80,7 +105,8 @@ generate_foot_positions(const GaitConfig& cfg) {
         const double base_phase =
             static_cast<double>(i) / cfg.steps_per_cycle;
         for (int j = 0; j < kLegCount; ++j) {
-            out[i][j] = foot_position(base_phase + cfg.phase_offset[j], cfg);
+            out[i][j] = foot_position(base_phase + cfg.phase_offset[j],
+                                      static_cast<Leg>(j), cfg);
         }
     }
     return out;

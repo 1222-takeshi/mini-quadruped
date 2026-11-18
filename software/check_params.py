@@ -57,6 +57,7 @@ check("step_height", num(gait, r"step_height = ([\d.]+)"),
 check("duty", num(gait, r"duty = ([\d.]+)"), num(ino, r"DUTY = ([\d.]+)"))
 check("servo_center", num(gait, r"servo_center = ([\d.]+)"),
       num(ino, r"SERVO_CENTER = ([\d.]+)"))
+check("turn", num(gait, r"turn = (-?[\d.]+)"), num(ino, r"TURN = (-?[\d.]+)"))
 
 cpp_phase = arr(gait, r"phase_offset = \{([^}]+)\}")
 ino_phase = arr(ino, r"PHASE_OFFSET\[4\] = \{([^}]+)\}")
