@@ -8,3 +8,4 @@ cad/out/
 *.step
 *.stl
 !docs/**/*.stl
+tools/stability_check
