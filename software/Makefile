@@ -5,7 +5,7 @@ LIB_SRC := leg_ik.cpp gait.cpp
 LIB_OBJ := $(LIB_SRC:.cpp=.o)
 TEST_BIN := tests/test_main
 
-.PHONY: all test clean check-params
+.PHONY: all test clean check-params stability
 
 all: $(TEST_BIN)
 
@@ -24,5 +24,9 @@ test: $(TEST_BIN)
 check-params:
 	python3 check_params.py
 
+stability: tools/stability_check.cpp $(LIB_SRC)
+	$(CXX) $(CXXFLAGS) $^ -o tools/stability_check
+	./tools/stability_check
+
 clean:
-	rm -f $(LIB_OBJ) tests/test_main.o $(TEST_BIN)
+	rm -f $(LIB_OBJ) tests/test_main.o $(TEST_BIN) tools/stability_check
