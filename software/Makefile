@@ -5,7 +5,7 @@ LIB_SRC := leg_ik.cpp gait.cpp
 LIB_OBJ := $(LIB_SRC:.cpp=.o)
 TEST_BIN := tests/test_main
 
-.PHONY: all test clean check-params stability
+.PHONY: all test clean check-params stability sweep
 
 all: $(TEST_BIN)
 
@@ -28,5 +28,9 @@ stability: tools/stability_check.cpp $(LIB_SRC)
 	$(CXX) $(CXXFLAGS) $^ -o tools/stability_check
 	./tools/stability_check
 
+sweep: tools/gait_sweep.cpp $(LIB_SRC)
+	$(CXX) $(CXXFLAGS) $^ -o tools/gait_sweep
+	./tools/gait_sweep
+
 clean:
-	rm -f $(LIB_OBJ) tests/test_main.o $(TEST_BIN) tools/stability_check
+	rm -f $(LIB_OBJ) tests/test_main.o $(TEST_BIN) tools/stability_check tools/gait_sweep

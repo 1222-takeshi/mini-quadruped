@@ -9,3 +9,4 @@ cad/out/
 *.stl
 !docs/**/*.stl
 tools/stability_check
+/software/tools/gait_sweep
